@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.TextView
 import android.widget.Toast
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
@@ -29,10 +30,10 @@ class MainActivity : AppCompatActivity() {
 
         // Fetchの間隔を設定。デフォルトは12時間
         val fetchInterval = 0L
-        // キャッシュ時間の間は、リモートから取得ではなくキャッシュした値を受け取る。
+        // キャッシュ時間の間は、リモートから取得ではなくキャッシュした値を受け取る。=リモートが更新されても反映されない
         // intervalが0の場合は都度リモートからフェッチするが、1時間に5回以上アクセスされた場合はその1時間はキャッシュから取得する
 
-        // Configの値をfetch
+        // RemoteConfigの値をfetch
         mFirebaseRemoteConfig.fetch(fetchInterval)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
@@ -46,8 +47,20 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, "Fetch Failed",
                                 Toast.LENGTH_SHORT).show()
                     }
-                    displayWelcomeMessage()
+
+
+                    // メッセージをtextViewに埋め込む
+                    val message = """
+                        ${RemoteConfigKeys.message.name}:${mFirebaseRemoteConfig.getString(RemoteConfigKeys.message.name)}
+                        ${RemoteConfigKeys.app_install_url.name}:${mFirebaseRemoteConfig.getString(RemoteConfigKeys.app_install_url.name)}
+                        ${RemoteConfigKeys.is_force_update.name}:${mFirebaseRemoteConfig.getBoolean(RemoteConfigKeys.is_force_update.name)}
+                        ${RemoteConfigKeys.version.name}:${mFirebaseRemoteConfig.getString(RemoteConfigKeys.version.name)}
+                    """.trimIndent()
+
+                    mWelcomeTextView.text = message
                 }
+
+
     }
 
     private fun displayWelcomeMessage() {
